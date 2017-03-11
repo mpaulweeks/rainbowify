@@ -66,6 +66,7 @@ function init(){
   var canvas = document.getElementById("canvas");
   var pm = null;
   var ready = true;
+  var size = 100;
 
   function stepRainbow(){
     pm.stepRainbow();
@@ -79,15 +80,19 @@ function init(){
 
   var rawImg = new Image;
   rawImg.onload = function() {
-    canvas.width = rawImg.width;
-    canvas.height = rawImg.height;
-    canvas.getContext("2d").drawImage(rawImg, 0, 0);
+    canvas.width = size;
+    canvas.height = size;
+    canvas.getContext("2d").drawImage(
+      rawImg,
+      0, 0, rawImg.width, rawImg.height,
+      0, 0, canvas.width, canvas.height
+    );
     pm = PixelManager(canvas);
     $('body').click(function(){
       pm.delta *= -1;
     })
     queueRainbow();
   };
-  rawImg.src = "clay100.jpg";
+  rawImg.src = "clay.jpg";
 
 };
