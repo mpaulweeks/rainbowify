@@ -21,6 +21,21 @@ function Pixel(x, y, pixelData, index){
       p.a
     ]
   }
+
+  p.isEqual = function(o){
+    if (!(p.x == o.x && p.y == o.y)){
+      throw "invalid pixel compare";
+    }
+    if (p.a != o.a){
+      throw "alpha should be unaffected";
+    }
+    var acceptableDiff = 5;
+    return (
+      Math.abs(p.r - o.r) < acceptableDiff &&
+      Math.abs(p.g - o.g) < acceptableDiff &&
+      Math.abs(p.b - o.b) < acceptableDiff
+    )
+  }
   return p;
 }
 
@@ -34,12 +49,23 @@ function PixelManager(canvas){
   var oldData = context.getImageData(0, 0, width, height); // might want this?
   pm.delta = 1;
 
-  pm.getPixel = function(x, y){
+  pm.checkLoop = function(){
+    var oldPixel = pm.getPixel(0, 0, oldData);
+    var newPixel = pm.getPixel(0, 0, imgData);
+    var result = oldPixel.isEqual(newPixel);
+    if (result){
+      console.log(oldPixel, newPixel);
+    }
+    return result;
+  }
+
+  pm.getPixel = function(x, y, data){
     if (x < 0 || x >= width || y < 0 || y >= height){
       return null;
     }
+    data = data || imgData;
     var index = (y * width + x) * 4;
-    pixel = Pixel(x,y,imgData.data,index);
+    pixel = Pixel(x,y,data.data,index);
     return pixel;
   }
 
@@ -66,16 +92,21 @@ function init(){
   var canvas = document.getElementById("canvas");
   var pm = null;
   var ready = true;
-  var size = 100;
+  var size = 200;
+  var direction = 1;
 
-  function stepRainbow(){
-    pm.stepRainbow();
-    var url = canvas.toDataURL();
-    document.body.style.backgroundImage = "url('" + url + "')";
-  }
-
-  function queueRainbow(){
-    setInterval(stepRainbow, 30);
+  function cacheRainbow(){
+    var imgs = [];
+    while (imgs.length == 0 || !pm.checkLoop()){
+      pm.stepRainbow();
+      imgs.push(canvas.toDataURL());
+    }
+    $('#loading').hide();
+    var index = 0;
+    setInterval(function (){
+      document.body.style.backgroundImage = "url('" + imgs[index] + "')";
+      index = (index + direction + imgs.length) % imgs.length;
+    }, 33);
   }
 
   var rawImg = new Image;
@@ -89,9 +120,9 @@ function init(){
     );
     pm = PixelManager(canvas);
     $('body').click(function(){
-      pm.delta *= -1;
+      direction *= -1;
     })
-    queueRainbow();
+    cacheRainbow();
   };
   rawImg.src = "clay.jpg";
 
