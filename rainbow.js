@@ -208,5 +208,5 @@ function init(){
   });
   StateManager();
   // debug
-  toggleMenu();
+  // toggleMenu();
 };
