@@ -21,6 +21,21 @@ function Pixel(x, y, pixelData, index){
       p.a
     ]
   }
+
+  p.isEqual = function(o){
+    if (!(p.x == o.x && p.y == o.y)){
+      throw "invalid pixel compare";
+    }
+    if (p.a != o.a){
+      throw "alpha should be unaffected";
+    }
+    var acceptableDiff = 5;
+    return (
+      Math.abs(p.r - o.r) < acceptableDiff &&
+      Math.abs(p.g - o.g) < acceptableDiff &&
+      Math.abs(p.b - o.b) < acceptableDiff
+    )
+  }
   return p;
 }
 
@@ -34,12 +49,20 @@ function PixelManager(canvas){
   var oldData = context.getImageData(0, 0, width, height); // might want this?
   pm.delta = 1;
 
-  pm.getPixel = function(x, y){
+  pm.checkLoop = function(){
+    var oldPixel = pm.getPixel(0, 0, oldData);
+    var newPixel = pm.getPixel(0, 0, imgData);
+    var result = oldPixel.isEqual(newPixel);
+    return result;
+  }
+
+  pm.getPixel = function(x, y, data){
     if (x < 0 || x >= width || y < 0 || y >= height){
       return null;
     }
+    data = data || imgData;
     var index = (y * width + x) * 4;
-    pixel = Pixel(x,y,imgData.data,index);
+    pixel = Pixel(x,y,data.data,index);
     return pixel;
   }
 
@@ -57,29 +80,75 @@ function PixelManager(canvas){
     context.putImageData(imgData, 0, 0);
   }
 
+  pm.url = function(){
+    return canvas.toDataURL();
+  }
+
+  pm.expectedCycleLength = function(){
+    var o = Pixel(0, 0, [0, 0, 0, 0]);
+    var p = o;
+    var count = 0;
+    while (count == 0 || !p.isEqual(o)){
+      var c = p.stepRainbow(pm.delta);
+      p = Pixel(0, 0, c);
+      count += 1;
+    }
+    console.log(o, p);
+    return count;
+  }
+
   return pm;
+}
+
+function StateManager(pm){
+  var sm = {};
+  sm.pm = pm;
+  sm.imgs = [sm.pm.url()];
+  sm.active = true;
+  sm.expected = pm.expectedCycleLength();
+  var direction = 1;
+  var index = -1;
+
+  sm.drawLoop = function(){
+    index = (index + direction + sm.imgs.length) % sm.imgs.length;
+    document.body.style.backgroundImage = "url('" + sm.imgs[index] + "')";
+    if (sm.active){
+      setTimeout(sm.drawLoop, 33);
+    }
+  }
+
+  $('body').click(function(){
+    direction *= -1;
+  });
+
+  function queueImageCalc(){
+    sm.pm.stepRainbow();
+    sm.imgs.push(sm.pm.url());
+    if (sm.pm.checkLoop()){
+      $('#loading').hide();
+      console.log(sm);
+      sm.drawLoop();
+    } else {
+      var percent = parseInt(100.0 * sm.imgs.length / sm.expected);
+      $('#percent').html(percent);
+      setTimeout(queueImageCalc, 0);
+    }
+  }
+
+  sm.init = function(){
+    queueImageCalc();
+  }
+
+  return sm;
 }
 
 
 function init(){
 
-  var canvas = document.getElementById("canvas");
-  var pm = null;
-  var ready = true;
-  var size = 100;
-
-  function stepRainbow(){
-    pm.stepRainbow();
-    var url = canvas.toDataURL();
-    document.body.style.backgroundImage = "url('" + url + "')";
-  }
-
-  function queueRainbow(){
-    setInterval(stepRainbow, 30);
-  }
-
   var rawImg = new Image;
   rawImg.onload = function() {
+    var canvas = document.getElementById("canvas");
+    var size = 100;
     canvas.width = size;
     canvas.height = size;
     canvas.getContext("2d").drawImage(
@@ -87,11 +156,9 @@ function init(){
       0, 0, rawImg.width, rawImg.height,
       0, 0, canvas.width, canvas.height
     );
-    pm = PixelManager(canvas);
-    $('body').click(function(){
-      pm.delta *= -1;
-    })
-    queueRainbow();
+    var pm = PixelManager(canvas);
+    var sm = StateManager(pm);
+    sm.init();
   };
   rawImg.src = "clay.jpg";
 
