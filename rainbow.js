@@ -53,9 +53,6 @@ function PixelManager(canvas){
     var oldPixel = pm.getPixel(0, 0, oldData);
     var newPixel = pm.getPixel(0, 0, imgData);
     var result = oldPixel.isEqual(newPixel);
-    if (result){
-      console.log(oldPixel, newPixel);
-    }
     return result;
   }
 
@@ -87,14 +84,28 @@ function PixelManager(canvas){
     return canvas.toDataURL();
   }
 
+  pm.expectedCycleLength = function(){
+    var o = Pixel(0, 0, [0, 0, 0, 0]);
+    var p = o;
+    var count = 0;
+    while (count == 0 || !p.isEqual(o)){
+      var c = p.stepRainbow(pm.delta);
+      p = Pixel(0, 0, c);
+      count += 1;
+    }
+    console.log(o, p);
+    return count;
+  }
+
   return pm;
 }
 
 function StateManager(pm){
   var sm = {};
   sm.pm = pm;
-  sm.imgs = [];
+  sm.imgs = [sm.pm.url()];
   sm.active = true;
+  sm.expected = pm.expectedCycleLength();
   var direction = 1;
   var index = -1;
 
@@ -108,7 +119,7 @@ function StateManager(pm){
 
   $('body').click(function(){
     direction *= -1;
-  })
+  });
 
   return sm;
 }
@@ -121,10 +132,10 @@ function init(){
     sm.imgs.push(sm.pm.url());
     if (sm.pm.checkLoop()){
       $('#loading').hide();
-      var index = 0;
+      console.log(sm);
       sm.drawLoop();
     } else {
-      var percent = parseInt(100.0 * sm.imgs.length / 127);
+      var percent = parseInt(100.0 * sm.imgs.length / sm.expected);
       $('#percent').html(percent);
       setTimeout(function (){
         queueImageCalc(sm);
