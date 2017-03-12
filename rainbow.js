@@ -93,7 +93,7 @@ function PixelManager(canvas){
       p = Pixel(0, 0, c);
       count += 1;
     }
-    console.log(o, p);
+    // console.log(o, p);
     return count;
   }
 
@@ -120,7 +120,7 @@ function StateManager(){
   }
   function startDrawLoop(){
     $('#loading').hide();
-    console.log(sm);
+    // console.log(sm);
     sm.active = true;
     drawLoop();
   }
@@ -170,10 +170,19 @@ function StateManager(){
     };
     sm.img.src = imgUrl;
   }
-  $("#size-update").click(loadImage);
   $('body').click(function(){
     sm.direction *= -1;
   });
+  $("#size-update").click(loadImage);
+  var imageLoader = document.getElementById('image-loader');
+  imageLoader.addEventListener('change', function(e1){
+    var reader = new FileReader;
+    reader.onload = function(e2){
+      var source = e2.target.result;
+      loadImageUrl(source);
+    };
+    reader.readAsDataURL(e1.target.files[0]);
+  }, false);
 
   // init
   loadImageUrl("clay.jpg");
