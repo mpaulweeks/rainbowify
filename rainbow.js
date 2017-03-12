@@ -83,34 +83,59 @@ function PixelManager(canvas){
     context.putImageData(imgData, 0, 0);
   }
 
+  pm.url = function(){
+    return canvas.toDataURL();
+  }
+
   return pm;
+}
+
+function StateManager(pm){
+  var sm = {};
+  sm.pm = pm;
+  sm.imgs = [];
+  sm.active = true;
+  var direction = 1;
+  var index = -1;
+
+  sm.drawLoop = function(){
+    index = (index + direction + sm.imgs.length) % sm.imgs.length;
+    document.body.style.backgroundImage = "url('" + sm.imgs[index] + "')";
+    if (sm.active){
+      setTimeout(sm.drawLoop, 33);
+    }
+  }
+
+  $('body').click(function(){
+    direction *= -1;
+  })
+
+  return sm;
 }
 
 
 function init(){
 
-  var canvas = document.getElementById("canvas");
-  var pm = null;
-  var ready = true;
-  var size = 200;
-  var direction = 1;
-
-  function cacheRainbow(){
-    var imgs = [];
-    while (imgs.length == 0 || !pm.checkLoop()){
-      pm.stepRainbow();
-      imgs.push(canvas.toDataURL());
+  function queueImageCalc(sm){
+    sm.pm.stepRainbow();
+    sm.imgs.push(sm.pm.url());
+    if (sm.pm.checkLoop()){
+      $('#loading').hide();
+      var index = 0;
+      sm.drawLoop();
+    } else {
+      var percent = parseInt(100.0 * sm.imgs.length / 127);
+      $('#percent').html(percent);
+      setTimeout(function (){
+        queueImageCalc(sm);
+      }, 0);
     }
-    $('#loading').hide();
-    var index = 0;
-    setInterval(function (){
-      document.body.style.backgroundImage = "url('" + imgs[index] + "')";
-      index = (index + direction + imgs.length) % imgs.length;
-    }, 33);
   }
 
   var rawImg = new Image;
   rawImg.onload = function() {
+    var canvas = document.getElementById("canvas");
+    var size = 100;
     canvas.width = size;
     canvas.height = size;
     canvas.getContext("2d").drawImage(
@@ -118,11 +143,9 @@ function init(){
       0, 0, rawImg.width, rawImg.height,
       0, 0, canvas.width, canvas.height
     );
-    pm = PixelManager(canvas);
-    $('body').click(function(){
-      direction *= -1;
-    })
-    cacheRainbow();
+    var pm = PixelManager(canvas);
+    var sm = StateManager(pm);
+    queueImageCalc(sm);
   };
   rawImg.src = "clay.jpg";
 
