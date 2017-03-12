@@ -102,31 +102,28 @@ function PixelManager(canvas){
 
 function StateManager(){
   var sm = {};
+  sm.img = null;
+  sm.imgUrl = null;
   sm.pm = null;
   sm.imgs = null;
   sm.active = null;
   sm.expected = null;
-  var direction = null;
-  var index = null;
+  sm.direction = null;
+  sm.index = null;
 
-  sm.drawLoop = function(){
-    index = (index + direction + sm.imgs.length) % sm.imgs.length;
-    document.body.style.backgroundImage = "url('" + sm.imgs[index] + "')";
+  function drawLoop(){
+    sm.index = (sm.index + sm.direction + sm.imgs.length) % sm.imgs.length;
+    document.body.style.backgroundImage = "url('" + sm.imgs[sm.index] + "')";
     if (sm.active){
-      setTimeout(sm.drawLoop, 33);
+      setTimeout(drawLoop, 33);
     }
   }
-
   function startDrawLoop(){
     $('#loading').hide();
     console.log(sm);
     sm.active = true;
-    sm.drawLoop();
+    drawLoop();
   }
-
-  $('body').click(function(){
-    direction *= -1;
-  });
 
   function queueImageCalc(){
     sm.pm.stepRainbow();
@@ -140,60 +137,67 @@ function StateManager(){
     }
   }
 
-  sm.init = function(pm){
+  function processImage(pm){
     $('#loading').show();
     sm.pm = pm;
     sm.imgs = [sm.pm.url()];
     document.body.style.backgroundImage = "url('" + sm.imgs[0] + "')";
     sm.active = false;
     sm.expected = pm.expectedCycleLength();
-    direction = 1;
-    index = -1;
+    sm.direction = 1;
+    sm.index = -1;
     queueImageCalc();
   }
 
-  var rawImg = new Image;
   function loadImage(){
     var size = $('#size').val();
     var canvas = document.getElementById("canvas");
     canvas.width = size;
     canvas.height = size;
     canvas.getContext("2d").drawImage(
-      rawImg,
-      0, 0, rawImg.width, rawImg.height,
+      sm.img,
+      0, 0, sm.img.width, sm.img.height,
       0, 0, canvas.width, canvas.height
     );
     var pm = PixelManager(canvas);
-    sm.init(pm);
+    processImage(pm);
   }
-  $("#size-update").click(function(){
-    loadImage();
-  })
-  rawImg.onload = function() {
-    loadImage();
-  };
-  rawImg.src = "clay.jpg";
+  function loadImageUrl(imgUrl){
+    sm.imgUrl = imgUrl || sm.imgUrl;
+    sm.img = new Image;
+    sm.img.onload = function() {
+      loadImage();
+    };
+    sm.img.src = imgUrl;
+  }
+  $("#size-update").click(loadImage);
+  $('body').click(function(){
+    sm.direction *= -1;
+  });
 
-  return sm;
+  // init
+  loadImageUrl("clay.jpg");
 }
 
 
 function init(){
-
   var menuHidden = true;
+  function toggleMenu(){
+    menuHidden = !menuHidden;
+    if (menuHidden){
+      $("#menu").hide();
+    } else {
+      $("#menu").show();
+    }
+  }
   $("body").keypress(function( event ) {
     if ( event.which == 96 ) {
       // `
       event.preventDefault();
-      menuHidden = !menuHidden;
-      console.log(menuHidden);
-      if (menuHidden){
-        $("#menu").hide();
-      } else {
-        $("#menu").show();
-      }
+      toggleMenu();
     }
   });
-
   StateManager();
+  // debug
+  toggleMenu();
 };
