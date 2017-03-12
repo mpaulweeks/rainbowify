@@ -121,13 +121,7 @@ function StateManager(pm){
     direction *= -1;
   });
 
-  return sm;
-}
-
-
-function init(){
-
-  function queueImageCalc(sm){
+  function queueImageCalc(){
     sm.pm.stepRainbow();
     sm.imgs.push(sm.pm.url());
     if (sm.pm.checkLoop()){
@@ -137,11 +131,19 @@ function init(){
     } else {
       var percent = parseInt(100.0 * sm.imgs.length / sm.expected);
       $('#percent').html(percent);
-      setTimeout(function (){
-        queueImageCalc(sm);
-      }, 0);
+      setTimeout(queueImageCalc, 0);
     }
   }
+
+  sm.init = function(){
+    queueImageCalc();
+  }
+
+  return sm;
+}
+
+
+function init(){
 
   var rawImg = new Image;
   rawImg.onload = function() {
@@ -156,7 +158,7 @@ function init(){
     );
     var pm = PixelManager(canvas);
     var sm = StateManager(pm);
-    queueImageCalc(sm);
+    sm.init();
   };
   rawImg.src = "clay.jpg";
 
