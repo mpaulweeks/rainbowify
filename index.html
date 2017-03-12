@@ -1,25 +1,39 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>rainbowed</title>
+    <title>rainbowify</title>
     <link rel="shortcut icon" href="clay.jpg" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       * { padding: 0; margin: 0; }
       html, body {
+        background-color: #222222;
+        color: #dddddd;
         min-height: 100% !important;
         height: 100%;
         width: 100%;
-        background-color: #222222;
-        color: #dddddd;
         text-align: center;
+      }
+      #menu {
+        padding-top: 10px;
+        background-color: white;
+        color: black;
+        top: 0px;
+        height: 34px;
+        width: 100%;
+        border: 2px solid black;
       }
     </style>
     <script src="jquery.min.js"></script>
     <script src="rainbow.js"></script>
   </head>
   <body>
+    <div id="menu" style="display:none;">
+      <input type="text" id="size" value="100" />
+      <input type="button" id="size-update" value="reload" />
+      <input type="file" id="image-loader" name="image-loader"/>
+    </div>
     <div id="loading">
       <h1>
         <br/>

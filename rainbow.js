@@ -93,41 +93,43 @@ function PixelManager(canvas){
       p = Pixel(0, 0, c);
       count += 1;
     }
-    console.log(o, p);
+    // console.log(o, p);
     return count;
   }
 
   return pm;
 }
 
-function StateManager(pm){
+function StateManager(){
   var sm = {};
-  sm.pm = pm;
-  sm.imgs = [sm.pm.url()];
-  sm.active = true;
-  sm.expected = pm.expectedCycleLength();
-  var direction = 1;
-  var index = -1;
+  sm.img = null;
+  sm.imgUrl = null;
+  sm.pm = null;
+  sm.imgs = null;
+  sm.active = null;
+  sm.expected = null;
+  sm.direction = null;
+  sm.index = null;
 
-  sm.drawLoop = function(){
-    index = (index + direction + sm.imgs.length) % sm.imgs.length;
-    document.body.style.backgroundImage = "url('" + sm.imgs[index] + "')";
+  function drawLoop(){
+    sm.index = (sm.index + sm.direction + sm.imgs.length) % sm.imgs.length;
+    document.body.style.backgroundImage = "url('" + sm.imgs[sm.index] + "')";
     if (sm.active){
-      setTimeout(sm.drawLoop, 33);
+      setTimeout(drawLoop, 33);
     }
   }
-
-  $('body').click(function(){
-    direction *= -1;
-  });
+  function startDrawLoop(){
+    $('#loading').hide();
+    // console.log(sm);
+    sm.active = true;
+    drawLoop();
+  }
 
   function queueImageCalc(){
     sm.pm.stepRainbow();
     sm.imgs.push(sm.pm.url());
     if (sm.pm.checkLoop()){
-      $('#loading').hide();
-      console.log(sm);
-      sm.drawLoop();
+      startDrawLoop();
     } else {
       var percent = parseInt(100.0 * sm.imgs.length / sm.expected);
       $('#percent').html(percent);
@@ -135,31 +137,76 @@ function StateManager(pm){
     }
   }
 
-  sm.init = function(){
+  function processImage(pm){
+    $('#loading').show();
+    sm.pm = pm;
+    sm.imgs = [sm.pm.url()];
+    document.body.style.backgroundImage = "url('" + sm.imgs[0] + "')";
+    sm.active = false;
+    sm.expected = pm.expectedCycleLength();
+    sm.direction = 1;
+    sm.index = -1;
     queueImageCalc();
   }
 
-  return sm;
+  function loadImage(){
+    var size = $('#size').val();
+    var canvas = document.getElementById("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    canvas.getContext("2d").drawImage(
+      sm.img,
+      0, 0, sm.img.width, sm.img.height,
+      0, 0, canvas.width, canvas.height
+    );
+    var pm = PixelManager(canvas);
+    processImage(pm);
+  }
+  function loadImageUrl(imgUrl){
+    sm.imgUrl = imgUrl || sm.imgUrl;
+    sm.img = new Image;
+    sm.img.onload = function() {
+      loadImage();
+    };
+    sm.img.src = imgUrl;
+  }
+  $('body').click(function(){
+    sm.direction *= -1;
+  });
+  $("#size-update").click(loadImage);
+  var imageLoader = document.getElementById('image-loader');
+  imageLoader.addEventListener('change', function(e1){
+    var reader = new FileReader;
+    reader.onload = function(e2){
+      var source = e2.target.result;
+      loadImageUrl(source);
+    };
+    reader.readAsDataURL(e1.target.files[0]);
+  }, false);
+
+  // init
+  loadImageUrl("clay.jpg");
 }
 
 
 function init(){
-
-  var rawImg = new Image;
-  rawImg.onload = function() {
-    var canvas = document.getElementById("canvas");
-    var size = 100;
-    canvas.width = size;
-    canvas.height = size;
-    canvas.getContext("2d").drawImage(
-      rawImg,
-      0, 0, rawImg.width, rawImg.height,
-      0, 0, canvas.width, canvas.height
-    );
-    var pm = PixelManager(canvas);
-    var sm = StateManager(pm);
-    sm.init();
-  };
-  rawImg.src = "clay.jpg";
-
+  var menuHidden = true;
+  function toggleMenu(){
+    menuHidden = !menuHidden;
+    if (menuHidden){
+      $("#menu").hide();
+    } else {
+      $("#menu").show();
+    }
+  }
+  $("body").keypress(function( event ) {
+    if ( event.which == 96 ) {
+      // `
+      event.preventDefault();
+      toggleMenu();
+    }
+  });
+  StateManager();
+  // debug
+  // toggleMenu();
 };
