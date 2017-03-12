@@ -100,14 +100,14 @@ function PixelManager(canvas){
   return pm;
 }
 
-function StateManager(pm){
+function StateManager(){
   var sm = {};
-  sm.pm = pm;
-  sm.imgs = [sm.pm.url()];
-  sm.active = true;
-  sm.expected = pm.expectedCycleLength();
-  var direction = 1;
-  var index = -1;
+  sm.pm = null;
+  sm.imgs = null;
+  sm.active = null;
+  sm.expected = null;
+  var direction = null;
+  var index = null;
 
   sm.drawLoop = function(){
     index = (index + direction + sm.imgs.length) % sm.imgs.length;
@@ -115,6 +115,13 @@ function StateManager(pm){
     if (sm.active){
       setTimeout(sm.drawLoop, 33);
     }
+  }
+
+  function startDrawLoop(){
+    $('#loading').hide();
+    console.log(sm);
+    sm.active = true;
+    sm.drawLoop();
   }
 
   $('body').click(function(){
@@ -125,9 +132,7 @@ function StateManager(pm){
     sm.pm.stepRainbow();
     sm.imgs.push(sm.pm.url());
     if (sm.pm.checkLoop()){
-      $('#loading').hide();
-      console.log(sm);
-      sm.drawLoop();
+      startDrawLoop();
     } else {
       var percent = parseInt(100.0 * sm.imgs.length / sm.expected);
       $('#percent').html(percent);
@@ -135,20 +140,22 @@ function StateManager(pm){
     }
   }
 
-  sm.init = function(){
+  sm.init = function(pm){
+    $('#loading').show();
+    sm.pm = pm;
+    sm.imgs = [sm.pm.url()];
+    document.body.style.backgroundImage = "url('" + sm.imgs[0] + "')";
+    sm.active = false;
+    sm.expected = pm.expectedCycleLength();
+    direction = 1;
+    index = -1;
     queueImageCalc();
   }
 
-  return sm;
-}
-
-
-function init(){
-
   var rawImg = new Image;
-  rawImg.onload = function() {
+  function loadImage(){
+    var size = $('#size').val();
     var canvas = document.getElementById("canvas");
-    var size = 100;
     canvas.width = size;
     canvas.height = size;
     canvas.getContext("2d").drawImage(
@@ -157,9 +164,36 @@ function init(){
       0, 0, canvas.width, canvas.height
     );
     var pm = PixelManager(canvas);
-    var sm = StateManager(pm);
-    sm.init();
+    sm.init(pm);
+  }
+  $("#size-update").click(function(){
+    loadImage();
+  })
+  rawImg.onload = function() {
+    loadImage();
   };
   rawImg.src = "clay.jpg";
 
+  return sm;
+}
+
+
+function init(){
+
+  var menuHidden = true;
+  $("body").keypress(function( event ) {
+    if ( event.which == 96 ) {
+      // `
+      event.preventDefault();
+      menuHidden = !menuHidden;
+      console.log(menuHidden);
+      if (menuHidden){
+        $("#menu").hide();
+      } else {
+        $("#menu").show();
+      }
+    }
+  });
+
+  StateManager();
 };
