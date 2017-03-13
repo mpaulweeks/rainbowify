@@ -15,32 +15,52 @@
         width: 100%;
         text-align: center;
       }
+      #container {
+        height: 100%;
+        width: 100%;
+      }
+      .button, #container {
+        cursor: pointer;
+      }
       #menu {
-        padding-top: 10px;
+        padding-top: 12px;
         background-color: white;
         color: black;
-        top: 0px;
         height: 34px;
         width: 100%;
         border: 2px solid black;
+        position: fixed;
+      }
+      .text {
+        font-size: 36pt;
+        text-shadow:
+         -2px -2px 0 #000,
+          2px -2px 0 #000,
+          -2px 2px 0 #000,
+           2px 2px 0 #000;
+      }
+      .hidden {
+        visibility: hidden;
       }
     </style>
     <script src="jquery.min.js"></script>
     <script src="rainbow.js"></script>
   </head>
   <body>
-    <div id="menu" style="display:none;">
-      <input type="text" id="size" value="100" />
-      <input type="button" id="size-update" value="reload" />
-      <input type="file" id="image-loader" name="image-loader"/>
+    <div id="menu" class="hidden">
+      <label> width: </label>
+      <input type="text" id="size"value="100" style="width: 50px; text-align: right;" />
+      <input type="button" id="size-update" value="reload" class="button" />
+      <input type="file" id="image-loader" name="image-loader" class="button" />
+      <span> press m key to hide this menu </span>
     </div>
-    <div id="loading">
-      <h1>
-        <br/>
-        loading...
-        <br/>
-        <span id="percent">0</span>%
-      </h1>
+    <div id="container">
+      <div id="loading" class="text">
+          <br/>
+          loading...
+          <br/>
+          <span id="percent">0</span>%
+      </div>
     </div>
     <div style="display:none;">
       <canvas id="canvas"></canvas>

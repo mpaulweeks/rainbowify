@@ -170,7 +170,7 @@ function StateManager(){
     };
     sm.img.src = imgUrl;
   }
-  $('body').click(function(){
+  $('#container').click(function(){
     sm.direction *= -1;
   });
   $("#size-update").click(loadImage);
@@ -194,19 +194,20 @@ function init(){
   function toggleMenu(){
     menuHidden = !menuHidden;
     if (menuHidden){
-      $("#menu").hide();
+      $("#menu").addClass("hidden");
     } else {
-      $("#menu").show();
+      $("#menu").removeClass("hidden");
     }
   }
   $("body").keypress(function( event ) {
-    if ( event.which == 96 ) {
-      // `
+    // console.log(event.which);
+    if ( event.which == 109 || event.which == 77 ) {
+      // m
       event.preventDefault();
       toggleMenu();
     }
   });
   StateManager();
   // debug
-  // toggleMenu();
+  toggleMenu();
 };
