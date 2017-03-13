@@ -211,7 +211,7 @@ function StateManager(){
     var size = $('#size').val();
     var canvas = document.getElementById("canvas");
     canvas.width = size;
-    canvas.height = size;
+    canvas.height = parseInt(canvas.width * (sm.img.height / sm.img.width));
     canvas.getContext("2d").drawImage(
       sm.img,
       0, 0, sm.img.width, sm.img.height,
