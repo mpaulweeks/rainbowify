@@ -44,6 +44,7 @@
       }
     </style>
     <script src="jquery.min.js"></script>
+    <script src="gif.js"></script>
     <script src="rainbow.js"></script>
   </head>
   <body>
@@ -53,11 +54,15 @@
       <input type="button" id="size-update" value="reload" class="button" />
       <input type="file" id="image-loader" name="image-loader" class="button" />
       <span> press m key to hide this menu </span>
+      <span id="download" class="hidden">
+        <a id="gif-src" download href="">download gif</a>
+        <a id="gifb-src" download href="">backward</a>
+      </span>
     </div>
     <div id="container">
       <div id="loading" class="text">
           <br/>
-          loading...
+          <span id="message">loading...</span>
           <br/>
           <span id="percent">0</span>%
       </div>

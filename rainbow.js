@@ -9,7 +9,7 @@ function Pixel(x, y, pixelData, index){
   p.a = pixelData[index + 3];
 
   function transform(num, diff, delta){
-    return ((num + (delta * diff)) + 255) % 255;
+    return parseInt(((num + (delta * diff)) + 255) % 255);
     // return ((num + (delta * diff)) - 55) % 150 + 55;
   }
 
@@ -83,6 +83,7 @@ function PixelManager(canvas){
   pm.url = function(){
     return canvas.toDataURL();
   }
+  pm.context = context;
 
   pm.expectedCycleLength = function(){
     var o = Pixel(0, 0, [0, 0, 0, 0]);
@@ -110,6 +111,59 @@ function StateManager(){
   sm.expected = null;
   sm.direction = null;
   sm.index = null;
+  sm.imageObjs = null;
+  sm.gif = null;
+  sm.gifb = null;
+
+  function assembleGif(){
+    sm.gif = new GIF({
+      workers: 2,
+      quality: 10
+    });
+    sm.gifb = new GIF({
+      workers: 2,
+      quality: 10
+    });
+    $('#message').html("generating GIF...");
+    var length = sm.imageObjs.length;
+    for (var i = 0; i < length; i++){
+      sm.gif.addFrame(sm.imageObjs[i], {delay: 33});
+      sm.gifb.addFrame(sm.imageObjs[length - (i + 1)], {delay: 50});
+      $('#percent').html(parseInt(100.0 * i / length));
+    }
+    $('#message').html("loading GIF...");
+    sm.gif.on('finished', function(blob) {
+      $('#loading').hide();
+      sm.gifUrl = URL.createObjectURL(blob);
+      $('#gif-src').attr('href', sm.gifUrl);
+      document.body.style.backgroundImage = "url('" + sm.gifUrl + "')";
+      sm.gifb.on('finished', function(blob) {
+        sm.gifbUrl = URL.createObjectURL(blob);
+        $('#gifb-src').attr('href', sm.gifbUrl);
+        $('#download').removeClass('hidden');
+      });
+      sm.gifb.render();
+    });
+    sm.gif.render();
+  }
+  function loopGifProduction(index){
+    if (index < sm.imgs.length){
+      var img = new Image;
+      img.onload = function() {
+        sm.imageObjs.push(img);
+        $('#percent').html(parseInt(100.0 * index / sm.expected));
+        loopGifProduction(index + 1);
+      };
+      img.src = sm.imgs[index];
+    } else {
+      assembleGif();
+    }
+  }
+  function startGifCreation(){
+    $('#message').html("generating images...");
+    // console.log(sm);
+    loopGifProduction(0);
+  }
 
   function drawLoop(){
     sm.index = (sm.index + sm.direction + sm.imgs.length) % sm.imgs.length;
@@ -122,6 +176,7 @@ function StateManager(){
     $('#loading').hide();
     // console.log(sm);
     sm.active = true;
+
     drawLoop();
   }
 
@@ -129,16 +184,18 @@ function StateManager(){
     sm.pm.stepRainbow();
     sm.imgs.push(sm.pm.url());
     if (sm.pm.checkLoop()){
-      startDrawLoop();
+      // startDrawLoop();
+      startGifCreation();
     } else {
-      var percent = parseInt(100.0 * sm.imgs.length / sm.expected);
-      $('#percent').html(percent);
+      $('#percent').html(parseInt(100.0 * sm.imgs.length / sm.expected));
       setTimeout(queueImageCalc, 0);
     }
   }
 
   function processImage(pm){
+    $('#message').html("rainbowifying...");
     $('#loading').show();
+    $('#download').addClass('hidden');
     sm.pm = pm;
     sm.imgs = [sm.pm.url()];
     document.body.style.backgroundImage = "url('" + sm.imgs[0] + "')";
@@ -146,6 +203,7 @@ function StateManager(){
     sm.expected = pm.expectedCycleLength();
     sm.direction = 1;
     sm.index = -1;
+    sm.imageObjs = [];
     queueImageCalc();
   }
 
