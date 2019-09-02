@@ -243,7 +243,7 @@ function StateManager(){
   }, false);
 
   // init
-  loadImageUrl("clay.jpg");
+  loadImageUrl("bob_ross.jpg");
 }
 
 
